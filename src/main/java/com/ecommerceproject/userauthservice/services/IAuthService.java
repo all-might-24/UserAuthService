@@ -9,6 +9,5 @@ public interface IAuthService {
 
     UserTokenDto login(String email, String password);
 
-    Boolean validateUserToken(String token);
-
+    boolean validateToken(String token);
 }

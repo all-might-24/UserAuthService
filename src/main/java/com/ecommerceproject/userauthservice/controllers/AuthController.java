@@ -4,6 +4,7 @@ import com.ecommerceproject.userauthservice.dtos.*;
 import com.ecommerceproject.userauthservice.exceptions.UnAuthorizedException;
 import com.ecommerceproject.userauthservice.models.User;
 import com.ecommerceproject.userauthservice.services.IAuthService;
+import com.ecommerceproject.userauthservice.services.IJwtService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,10 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/auth")
 public class AuthController {
 
-    private IAuthService authService;
+    private final IAuthService authService;
 
-    public AuthController(IAuthService authService) {
+    public AuthController(IAuthService authService, IJwtService jwtService) {
         this.authService = authService;
+
     }
 
     @PostMapping("/signup")
@@ -48,7 +50,7 @@ public class AuthController {
 
     @PostMapping("/validate-token")
     public void validateToken(@RequestBody ValidateTokenDto validateTokenDto) {
-        Boolean isValidToken = authService.validateUserToken(validateTokenDto.getToken());
+        boolean isValidToken = authService.validateToken(validateTokenDto.getToken());
 
         if(!isValidToken) {
             throw new UnAuthorizedException("Invalid Token");

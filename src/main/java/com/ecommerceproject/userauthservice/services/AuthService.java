@@ -11,14 +11,8 @@ import com.ecommerceproject.userauthservice.models.enums.State;
 import com.ecommerceproject.userauthservice.repositories.RoleRepository;
 import com.ecommerceproject.userauthservice.repositories.SessionRepository;
 import com.ecommerceproject.userauthservice.repositories.UserRepository;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtParser;
-import io.jsonwebtoken.Jwts;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import javax.crypto.SecretKey;
 import java.util.*;
 
 @Service
@@ -32,19 +26,20 @@ public class AuthService implements IAuthService{
 
     private final BCryptPasswordEncoder encoder;
 
-    private final SecretKey secretKey;
+    private final IJwtService jwtService;
+
 
     public AuthService(UserRepository userRepository,
                        RoleRepository roleRepository,
                        SessionRepository sessionRepository,
                        BCryptPasswordEncoder encoder,
-                       SecretKey secretKey) {
+                       IJwtService jwtService) {
 
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
-        this.sessionRepository = sessionRepository;
         this.encoder = encoder;
-        this.secretKey = secretKey;
+        this.sessionRepository = sessionRepository;
+        this.jwtService = jwtService;
     }
 
     @Override
@@ -90,23 +85,6 @@ public class AuthService implements IAuthService{
         User user = optionalUser.get();
 
         if(encoder.matches(password, user.getPassword())) { // matches(rawPassword, EncodedPassword)
-         /*
-                 JWT
-                 Parts-3
-                   - Headers
-                   - Claims(Payload)
-                   - Signature
-
-                * Payload = Claims
-
-                * While you can use any keys, following JWT standards is recommended:
-
-                        iat (Issued At): Timestamp of when the token was created.
-                        exp (Expiry): When the token becomes invalid.
-                        iss (Issuer): Who created the token (e.g., "scaler").
-                        userId: Custom claim for identification.
-                        scope: Roles/Permissions assigned to the user.
-         */
 
             Map<String, Object> payload = new HashMap<>();
             Long currentTimeInMills = System.currentTimeMillis();
@@ -117,11 +95,11 @@ public class AuthService implements IAuthService{
             payload.put("userId", user.getUsername());
             payload.put("scope", user.getRoles());
 
-//            MacAlgorithm macAlgorithm = Jwts.SIG.HS256;
-//            SecretKey secretKey = macAlgorithm.key().build();
+            //MacAlgorithm macAlgorithm = Jwts.SIG.HS256;
+            //SecretKey secretKey = macAlgorithm.key().build();
 
-            String token = Jwts.builder().claims(payload).signWith(secretKey).compact();
-            System.out.println("Token : " + token);
+            String token = jwtService.generateJwtToken(payload);
+            //System.out.println("Token : " + token);
             Session session = new Session();
             session.setUser(user);
             session.setToken(token);
@@ -136,7 +114,7 @@ public class AuthService implements IAuthService{
     }
 
     @Override
-    public Boolean validateUserToken(String token) {
+    public boolean validateToken(String token) {
 
         Optional<Session> optionalSession = sessionRepository.findByToken(token);
 
@@ -144,23 +122,16 @@ public class AuthService implements IAuthService{
             return false;
         }
 
-
-        JwtParser jwtParser = Jwts.parser().verifyWith(secretKey).build();
-        Claims claims = jwtParser.parseSignedClaims(token).getPayload();
-
-        Long expiry = (Long) claims.get("exp");
-
-       Long currentTimeInMills = System.currentTimeMillis();
-
-       if(expiry < currentTimeInMills ) {
-           Session session = optionalSession.get();
-           session.setState(State.INACTIVE);
-           sessionRepository.save(session);
-           return false;
-       }
+        if (!jwtService.validateToken(token)) {
+            Session session = optionalSession.get();
+            session.setState(State.INACTIVE);
+            sessionRepository.save(session);
+            return false;
+        }
 
         return true;
     }
+
 }
 
 /*
