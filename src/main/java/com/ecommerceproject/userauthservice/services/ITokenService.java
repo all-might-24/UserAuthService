@@ -2,9 +2,9 @@ package com.ecommerceproject.userauthservice.services;
 
 import java.util.Map;
 
-public interface IJwtService {
+public interface ITokenService {
 
-    String generateJwtToken(Map<String, Object> payload);
+    String generateToken(Map<String, Object> payload);
 
     boolean validateToken(String token);
 }

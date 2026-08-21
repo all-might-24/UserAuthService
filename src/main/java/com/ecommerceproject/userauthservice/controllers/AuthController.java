@@ -2,9 +2,9 @@ package com.ecommerceproject.userauthservice.controllers;
 
 import com.ecommerceproject.userauthservice.dtos.*;
 import com.ecommerceproject.userauthservice.exceptions.UnAuthorizedException;
+import com.ecommerceproject.userauthservice.mapper.UserMapper;
 import com.ecommerceproject.userauthservice.models.User;
 import com.ecommerceproject.userauthservice.services.IAuthService;
-import com.ecommerceproject.userauthservice.services.IJwtService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,8 +19,11 @@ public class AuthController {
 
     private final IAuthService authService;
 
-    public AuthController(IAuthService authService, IJwtService jwtService) {
+    private final UserMapper userMapper;
+
+    public AuthController(IAuthService authService, UserMapper userMapper) {
         this.authService = authService;
+        this.userMapper = userMapper;
 
     }
 
@@ -30,7 +33,7 @@ public class AuthController {
                 signUpRequestDto.getEmail(),
                 signUpRequestDto.getPassword());
 
-        return new ResponseEntity<>(user.convertToDTO(), HttpStatus.CREATED);
+        return new ResponseEntity<>(userMapper.toDto(user), HttpStatus.CREATED);
 
     }
 
@@ -45,7 +48,7 @@ public class AuthController {
         return ResponseEntity
                 .ok()
                 .headers(headers)
-                .body(userTokenDto.getUser().convertToDTO());
+                .body(userTokenDto.getUser());
     }
 
     @PostMapping("/validate-token")

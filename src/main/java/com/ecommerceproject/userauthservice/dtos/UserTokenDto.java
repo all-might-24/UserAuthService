@@ -1,6 +1,5 @@
 package com.ecommerceproject.userauthservice.dtos;
 
-import com.ecommerceproject.userauthservice.models.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,6 +8,6 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class UserTokenDto {
-    private User user;
+    private UserDto user;
     private String token;
 }

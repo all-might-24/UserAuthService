@@ -10,16 +10,16 @@ import javax.crypto.SecretKey;
 import java.util.Map;
 
 @Service
-public class JwtService implements IJwtService{
+public class JwtTokenService implements ITokenService {
 
     private final SecretKey secretKey;
 
-    public JwtService(SecretKey secretKey) {
+    public JwtTokenService(SecretKey secretKey) {
         this.secretKey = secretKey;
     }
 
     @Override
-    public String generateJwtToken(Map<String, Object> payload) {
+    public String generateToken(Map<String, Object> payload) {
 
 //       MacAlgorithm macAlgorithm = Jwts.SIG.HS256;
 //       SecretKey secretKey = macAlgorithm.key().build();
