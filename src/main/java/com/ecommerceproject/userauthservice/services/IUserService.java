@@ -12,18 +12,6 @@ public interface IUserService {
 
     Optional<User> findByEmail(String email);
 
-//    User findById(long id);
-
-    UserDto convertToDto(User user);
-
     User createUser(User user);
-
-//    void updateProfile(long id, User user);
-//
-//    void changeState(long id, State state);
-//
-//    void assignRole(long id, List<Role> roles);
-//
-//    void deleteUser(long id);
 
 }

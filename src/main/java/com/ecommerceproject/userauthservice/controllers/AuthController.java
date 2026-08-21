@@ -2,8 +2,6 @@ package com.ecommerceproject.userauthservice.controllers;
 
 import com.ecommerceproject.userauthservice.dtos.*;
 import com.ecommerceproject.userauthservice.exceptions.UnAuthorizedException;
-import com.ecommerceproject.userauthservice.mapper.UserMapper;
-import com.ecommerceproject.userauthservice.models.User;
 import com.ecommerceproject.userauthservice.services.IAuthService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -19,21 +17,17 @@ public class AuthController {
 
     private final IAuthService authService;
 
-    private final UserMapper userMapper;
-
-    public AuthController(IAuthService authService, UserMapper userMapper) {
+    public AuthController(IAuthService authService) {
         this.authService = authService;
-        this.userMapper = userMapper;
-
     }
 
     @PostMapping("/signup")
     public ResponseEntity<UserDto> signUp(@RequestBody SignUpRequestDto signUpRequestDto) {
-        User user = authService.signup(signUpRequestDto.getUsername(),
+        UserDto user = authService.signup(signUpRequestDto.getUsername(),
                 signUpRequestDto.getEmail(),
                 signUpRequestDto.getPassword());
 
-        return new ResponseEntity<>(userMapper.toDto(user), HttpStatus.CREATED);
+        return new ResponseEntity<>(user, HttpStatus.CREATED);
 
     }
 

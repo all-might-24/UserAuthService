@@ -1,5 +1,6 @@
 package com.ecommerceproject.userauthservice.services;
 
+import com.ecommerceproject.userauthservice.dtos.UserDto;
 import com.ecommerceproject.userauthservice.dtos.UserTokenDto;
 import com.ecommerceproject.userauthservice.exceptions.EmailAlreadyExistsException;
 import com.ecommerceproject.userauthservice.exceptions.InvalidCredentialsException;
@@ -28,24 +29,28 @@ public class AuthService implements IAuthService{
 
     private final IUserService userService;
 
+    private final UserMapper userMapper;
+
 
 
     public AuthService(RoleRepository roleRepository,
                        SessionRepository sessionRepository,
                        BCryptPasswordEncoder encoder,
                        ITokenService jwtService,
-                       IUserService userService) {
+                       IUserService userService,
+                       UserMapper userMapper) {
         this.roleRepository = roleRepository;
         this.sessionRepository = sessionRepository;
         this.encoder = encoder;
         this.jwtService = jwtService;
         this.userService = userService;
+        this.userMapper = userMapper;
     }
 
 
 
     @Override
-    public User signup(String name, String email, String password) {
+    public UserDto signup(String name, String email, String password) {
 
         Optional<User> optionalUser = userService.findByEmail(email);
         if(optionalUser.isPresent()) {
@@ -73,7 +78,7 @@ public class AuthService implements IAuthService{
         }
         user.setRoles(List.of(roleToBeSet));
 
-        return userService.createUser(user);
+        return userMapper.toDto(userService.createUser(user));
     }
 
     @Override
@@ -97,9 +102,6 @@ public class AuthService implements IAuthService{
             payload.put("userId", user.getUsername());
             payload.put("scope", user.getRoles());
 
-            //MacAlgorithm macAlgorithm = Jwts.SIG.HS256;
-            //SecretKey secretKey = macAlgorithm.key().build();
-
             String token = jwtService.generateToken(payload);
             //System.out.println("Token : " + token);
             Session session = new Session();
@@ -109,7 +111,7 @@ public class AuthService implements IAuthService{
 
             sessionRepository.save(session);
 
-            return new UserTokenDto(userService.convertToDto(user), token);
+            return new UserTokenDto(userMapper.toDto(user), token);
         } else {
             throw new InvalidCredentialsException("Invalid Credentials");
         }

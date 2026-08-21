@@ -30,18 +30,21 @@ public class JwtTokenService implements ITokenService {
 
     @Override
     public boolean validateToken(String token) {
+        try {
+            JwtParser jwtParser = Jwts
+                            .parser()
+                            .verifyWith(secretKey)
+                            .build();
 
-        JwtParser jwtParser = Jwts.parser().verifyWith(secretKey).build();
-        Claims claims = jwtParser.parseSignedClaims(token).getPayload();
+            Claims claims = jwtParser.parseSignedClaims(token).getPayload();
 
-        Long expiry = (Long) claims.get("exp");
+            Long expiry = claims.get("exp", Long.class);
 
-        Long currentTimeInMills = System.currentTimeMillis();
+            return expiry != null && expiry > System.currentTimeMillis();
 
-        if(expiry < currentTimeInMills ) {
+        } catch (Exception e) {
             return false;
         }
-        return true;
     }
 }
 
