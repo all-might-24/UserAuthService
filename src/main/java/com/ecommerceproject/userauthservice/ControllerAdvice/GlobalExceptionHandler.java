@@ -3,6 +3,7 @@ package com.ecommerceproject.userauthservice.ControllerAdvice;
 import com.ecommerceproject.userauthservice.dtos.ExceptionDto;
 import com.ecommerceproject.userauthservice.exceptions.EmailAlreadyExistsException;
 import com.ecommerceproject.userauthservice.exceptions.InvalidCredentialsException;
+import com.ecommerceproject.userauthservice.exceptions.UnAuthorizedException;
 import com.ecommerceproject.userauthservice.exceptions.UserDoesNotExistsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ExceptionDto> handleInvalidCredentialsException(InvalidCredentialsException e) {
+        ExceptionDto edto = new ExceptionDto();
+        edto.setMessage(e.getMessage());
+        return new ResponseEntity<>(edto, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(UnAuthorizedException.class)
+    public ResponseEntity<ExceptionDto> handleUnAuthorizedException(UnAuthorizedException e) {
         ExceptionDto edto = new ExceptionDto();
         edto.setMessage(e.getMessage());
         return new ResponseEntity<>(edto, HttpStatus.UNAUTHORIZED);

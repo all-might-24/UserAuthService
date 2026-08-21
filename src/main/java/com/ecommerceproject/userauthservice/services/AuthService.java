@@ -14,8 +14,6 @@ import com.ecommerceproject.userauthservice.repositories.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.MacAlgorithm;
-import io.jsonwebtoken.security.SecretJwk;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,21 +24,28 @@ import java.util.*;
 @Service
 public class AuthService implements IAuthService{
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private RoleRepository roleRepository;
+    private final RoleRepository roleRepository;
 
-    @Autowired
-    private SessionRepository sessionRepository;
+    private final SessionRepository sessionRepository;
 
-    @Autowired
-    private BCryptPasswordEncoder encoder;
+    private final BCryptPasswordEncoder encoder;
 
-    @Autowired
-    private SecretKey secretKey;
+    private final SecretKey secretKey;
 
+    public AuthService(UserRepository userRepository,
+                       RoleRepository roleRepository,
+                       SessionRepository sessionRepository,
+                       BCryptPasswordEncoder encoder,
+                       SecretKey secretKey) {
+
+        this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
+        this.sessionRepository = sessionRepository;
+        this.encoder = encoder;
+        this.secretKey = secretKey;
+    }
 
     @Override
     public User signup(String name, String email, String password) {
