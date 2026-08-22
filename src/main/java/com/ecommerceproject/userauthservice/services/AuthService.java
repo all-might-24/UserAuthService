@@ -99,7 +99,7 @@ public class AuthService implements IAuthService{
             payload.put("iat", currentTimeInMills);
             payload.put("exp", currentTimeInMills+100000);
             payload.put("iss", "Issuer");
-            payload.put("userId", user.getUsername());
+            payload.put("userId", user.getId());
             payload.put("scope", user.getRoles());
 
             String token = jwtService.generateToken(payload);

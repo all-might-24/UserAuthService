@@ -6,10 +6,8 @@ import com.ecommerceproject.userauthservice.services.IAuthService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
@@ -52,5 +50,13 @@ public class AuthController {
         if(!isValidToken) {
             throw new UnAuthorizedException("Invalid Token");
         }
+    }
+
+    @GetMapping("/test-auth")
+    public String testAuthentication(Authentication authentication) {
+        if (authentication == null) {
+            return "Not authenticated";
+        }
+        return "Authenticated user: " + authentication.getPrincipal();
     }
 }

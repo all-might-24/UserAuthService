@@ -30,21 +30,19 @@ public class JwtTokenService implements ITokenService {
 
     @Override
     public boolean validateToken(String token) {
-        try {
-            JwtParser jwtParser = Jwts
-                            .parser()
-                            .verifyWith(secretKey)
-                            .build();
+        Long expiry = parseToken(token).get("exp", Long.class);
+        return expiry != null && expiry > System.currentTimeMillis();
 
-            Claims claims = jwtParser.parseSignedClaims(token).getPayload();
+    }
 
-            Long expiry = claims.get("exp", Long.class);
+    @Override
+    public Long getUserId(String token) {
+        return parseToken(token).get("userId", Long.class);
+    }
 
-            return expiry != null && expiry > System.currentTimeMillis();
-
-        } catch (Exception e) {
-            return false;
-        }
+    private Claims parseToken(String token) {
+        JwtParser jwtParser = Jwts.parser().verifyWith(secretKey).build();
+        return jwtParser.parseSignedClaims(token).getPayload();
     }
 }
 
