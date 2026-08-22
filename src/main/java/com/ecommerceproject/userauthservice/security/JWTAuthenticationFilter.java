@@ -7,12 +7,16 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class JWTAuthenticationFilter extends OncePerRequestFilter {
@@ -50,10 +54,19 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
         Long userId = tokenService.getUserId(token);
 
+
+        List<String> roles = tokenService.getUserRoles(token);
+
+        List<GrantedAuthority> authorities = roles
+                .stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                .collect(Collectors.toList());
+
+
         Authentication authentication = new UsernamePasswordAuthenticationToken(
                 userId,  // principal
                 null,      // credentials
-                Collections.emptyList() // list of roles
+                authorities // list of roles
         );
 
         SecurityContextHolder
@@ -76,7 +89,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                        ↓
                     Validate JWT
                        ↓
-                    Extract userId
+                    Extract userId, roles
                        ↓
                     Create Authentication
                        ↓

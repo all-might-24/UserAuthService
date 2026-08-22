@@ -6,6 +6,7 @@ import com.ecommerceproject.userauthservice.services.IAuthService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -57,6 +58,18 @@ public class AuthController {
         if (authentication == null) {
             return "Not authenticated";
         }
-        return "Authenticated user: " + authentication.getPrincipal();
+        return "Authenticated user: " + authentication.getPrincipal() + ", Authorities: " + authentication.getAuthorities();
+    }
+
+    @GetMapping("/admin-test")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String testAdmin() {
+        return "Welcome Admin";
+    }
+
+    @GetMapping("/user-test")
+    @PreAuthorize("hasRole('USER')")
+    public String testUser() {
+        return "Welcome User";
     }
 }

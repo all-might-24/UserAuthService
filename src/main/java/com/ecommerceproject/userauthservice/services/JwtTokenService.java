@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -30,14 +32,24 @@ public class JwtTokenService implements ITokenService {
 
     @Override
     public boolean validateToken(String token) {
-        Long expiry = parseToken(token).get("exp", Long.class);
-        return expiry != null && expiry > System.currentTimeMillis();
+        try {
+            Long expiry = parseToken(token).get("exp", Long.class);
 
+            return expiry != null && expiry > System.currentTimeMillis();
+
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     @Override
     public Long getUserId(String token) {
         return parseToken(token).get("userId", Long.class);
+    }
+
+    @Override
+    public List<String> getUserRoles(String token) {
+        return parseToken(token).get("scope", List.class);
     }
 
     private Claims parseToken(String token) {

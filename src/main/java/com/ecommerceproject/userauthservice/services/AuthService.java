@@ -65,12 +65,12 @@ public class AuthService implements IAuthService{
         user.setPassword(encoder.encode(password));
         user.setState(State.ACTIVE);
 
-        Optional<Role> optionalRole = roleRepository.findByRoleTitle("DEFAULT");
+        Optional<Role> optionalRole = roleRepository.findByRoleTitle("USER");
         Role roleToBeSet;
 
         if(optionalRole.isEmpty()) {
             Role role = new Role();
-            role.setRoleTitle("DEFAULT");
+            role.setRoleTitle("USER");
             roleRepository.save(role);
             roleToBeSet = role;
         } else {
@@ -100,7 +100,9 @@ public class AuthService implements IAuthService{
             payload.put("exp", currentTimeInMills+100000);
             payload.put("iss", "Issuer");
             payload.put("userId", user.getId());
-            payload.put("scope", user.getRoles());
+
+            List<String> roles = user.getRoles().stream().map(Role::getRoleTitle).toList();
+            payload.put("scope", roles);
 
             String token = jwtService.generateToken(payload);
             //System.out.println("Token : " + token);
