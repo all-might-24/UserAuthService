@@ -4,10 +4,13 @@ import com.ecommerceproject.userauthservice.dtos.ExceptionDto;
 import com.ecommerceproject.userauthservice.exceptions.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -58,6 +61,19 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ExceptionDto> handleSessionAlreadyExpiredException(SessionAlreadyExpiredException e) {
         HttpStatus status = HttpStatus.UNAUTHORIZED;
         ExceptionDto dto = createExceptionDto(status, e.getMessage());
+        return new ResponseEntity<>(dto, status);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ExceptionDto> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        Map<String, String> errors = e
+                .getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .collect(Collectors.toMap(error -> error.getField(), error -> error.getDefaultMessage()));
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        ExceptionDto dto = createExceptionDto(status, "Validation Failed");
+        dto.setErrors(errors);
         return new ResponseEntity<>(dto, status);
     }
 

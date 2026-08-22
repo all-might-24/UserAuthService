@@ -5,6 +5,7 @@ import com.ecommerceproject.userauthservice.exceptions.UnAuthorizedException;
 import com.ecommerceproject.userauthservice.models.User;
 import com.ecommerceproject.userauthservice.services.IAuthService;
 import com.ecommerceproject.userauthservice.services.IUserService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,7 +32,7 @@ public class AuthController {
 
 
     @PostMapping("/signup")
-    public ResponseEntity<UserDto> signUp(@RequestBody SignUpRequestDto signUpRequestDto) {
+    public ResponseEntity<UserDto> signUp(@Valid @RequestBody SignUpRequestDto signUpRequestDto) {
         UserDto user = authService.signup(signUpRequestDto.getUsername(),
                 signUpRequestDto.getEmail(),
                 signUpRequestDto.getPassword());
@@ -68,7 +69,14 @@ public class AuthController {
         if (authentication == null) {
             return "Not authenticated";
         }
-        return "Authenticated user: " + authentication.getPrincipal() + ", Authorities: " + authentication.getAuthorities();
+        return "Authenticated user: " + authentication.getPrincipal() +
+                ", Authorities: " + authentication.getAuthorities();
+    }
+
+    @PostMapping("/logout")
+    public String logout(@RequestHeader("Authorization") String authHeader) {
+        authService.logout(authHeader);
+        return "Logout success";
     }
 
     @PostMapping("/assign-roles")
@@ -87,11 +95,5 @@ public class AuthController {
     @PreAuthorize("hasRole('USER')")
     public String testUser() {
         return "Welcome User";
-    }
-
-    @PostMapping("/logout")
-    public String logout(@RequestHeader("Authorization") String authHeader) {
-        authService.logout(authHeader);
-        return "Logout success";
     }
 }
