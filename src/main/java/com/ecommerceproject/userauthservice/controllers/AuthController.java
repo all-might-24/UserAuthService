@@ -2,7 +2,9 @@ package com.ecommerceproject.userauthservice.controllers;
 
 import com.ecommerceproject.userauthservice.dtos.*;
 import com.ecommerceproject.userauthservice.exceptions.UnAuthorizedException;
+import com.ecommerceproject.userauthservice.models.User;
 import com.ecommerceproject.userauthservice.services.IAuthService;
+import com.ecommerceproject.userauthservice.services.IUserService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,9 +18,17 @@ public class AuthController {
 
     private final IAuthService authService;
 
-    public AuthController(IAuthService authService) {
+    private final IUserService userService;
+
+//    public AuthController(IAuthService authService) {
+//        this.authService = authService;
+//    }
+
+    public AuthController(IAuthService authService, IUserService userService) {
         this.authService = authService;
+        this.userService = userService;
     }
+
 
     @PostMapping("/signup")
     public ResponseEntity<UserDto> signUp(@RequestBody SignUpRequestDto signUpRequestDto) {
@@ -61,6 +71,12 @@ public class AuthController {
         return "Authenticated user: " + authentication.getPrincipal() + ", Authorities: " + authentication.getAuthorities();
     }
 
+    @PostMapping("/assign-roles")
+    @PreAuthorize("hasRole('ADMIN')")
+    public void assignRolesToUser(@RequestBody AssignRolesRequestDto assignRolesRequestDto) {
+        userService.assignRoles(assignRolesRequestDto.getUser().getEmail(), assignRolesRequestDto.getRoles());
+    }
+
     @GetMapping("/admin-test")
     @PreAuthorize("hasRole('ADMIN')")
     public String testAdmin() {
@@ -71,5 +87,11 @@ public class AuthController {
     @PreAuthorize("hasRole('USER')")
     public String testUser() {
         return "Welcome User";
+    }
+
+    @PostMapping("/logout")
+    public String logout(@RequestHeader("Authorization") String authHeader) {
+        authService.logout(authHeader);
+        return "Logout success";
     }
 }

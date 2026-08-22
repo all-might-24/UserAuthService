@@ -2,16 +2,13 @@ package com.ecommerceproject.userauthservice.services;
 
 import com.ecommerceproject.userauthservice.dtos.UserDto;
 import com.ecommerceproject.userauthservice.dtos.UserTokenDto;
-import com.ecommerceproject.userauthservice.exceptions.EmailAlreadyExistsException;
-import com.ecommerceproject.userauthservice.exceptions.InvalidCredentialsException;
-import com.ecommerceproject.userauthservice.exceptions.UserDoesNotExistsException;
+import com.ecommerceproject.userauthservice.exceptions.*;
 import com.ecommerceproject.userauthservice.mapper.UserMapper;
 import com.ecommerceproject.userauthservice.models.Role;
 import com.ecommerceproject.userauthservice.models.Session;
 import com.ecommerceproject.userauthservice.models.User;
 import com.ecommerceproject.userauthservice.models.enums.State;
 import com.ecommerceproject.userauthservice.repositories.RoleRepository;
-import com.ecommerceproject.userauthservice.repositories.SessionRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.*;
@@ -21,7 +18,7 @@ public class AuthService implements IAuthService{
 
     private final RoleRepository roleRepository;
 
-    private final SessionRepository sessionRepository;
+    private final ISessionService sessionService;
 
     private final BCryptPasswordEncoder encoder;
 
@@ -34,13 +31,13 @@ public class AuthService implements IAuthService{
 
 
     public AuthService(RoleRepository roleRepository,
-                       SessionRepository sessionRepository,
+                       ISessionService sessionService,
                        BCryptPasswordEncoder encoder,
                        ITokenService jwtService,
                        IUserService userService,
                        UserMapper userMapper) {
         this.roleRepository = roleRepository;
-        this.sessionRepository = sessionRepository;
+        this.sessionService = sessionService;
         this.encoder = encoder;
         this.jwtService = jwtService;
         this.userService = userService;
@@ -111,7 +108,7 @@ public class AuthService implements IAuthService{
             session.setToken(token);
             session.setState(State.ACTIVE);
 
-            sessionRepository.save(session);
+            sessionService.saveSession(session);
 
             return new UserTokenDto(userMapper.toDto(user), token);
         } else {
@@ -122,7 +119,7 @@ public class AuthService implements IAuthService{
     @Override
     public boolean validateToken(String token) {
 
-        Optional<Session> optionalSession = sessionRepository.findByToken(token);
+        Optional<Session> optionalSession = sessionService.findByToken(token);
 
         if(optionalSession.isEmpty()) {
             return false;
@@ -131,11 +128,16 @@ public class AuthService implements IAuthService{
         if (!jwtService.validateToken(token)) {
             Session session = optionalSession.get();
             session.setState(State.INACTIVE);
-            sessionRepository.save(session);
+            sessionService.saveSession(session);
             return false;
         }
 
         return true;
+    }
+
+    @Override
+    public void logout(String authHeader) {
+        sessionService.logout(authHeader);
     }
 
 }

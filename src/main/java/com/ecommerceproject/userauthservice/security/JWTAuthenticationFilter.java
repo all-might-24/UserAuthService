@@ -1,5 +1,6 @@
 package com.ecommerceproject.userauthservice.security;
 
+import com.ecommerceproject.userauthservice.services.ISessionService;
 import com.ecommerceproject.userauthservice.services.ITokenService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -14,7 +15,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,9 +23,13 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
     private final ITokenService tokenService;
 
-    public JWTAuthenticationFilter(ITokenService tokenService) {
+    private final ISessionService sessionService;
+
+    public JWTAuthenticationFilter(ITokenService tokenService, ISessionService sessionService) {
         this.tokenService = tokenService;
+        this.sessionService = sessionService;
     }
+
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -44,9 +48,10 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring(bearer.length());
 
-        boolean isValid = tokenService.validateToken(token);
+        boolean isTokenValid = tokenService.validateToken(token);
+        boolean isSessionValid = sessionService.isSessionValid(token);
 
-        if(!isValid) {
+        if(!isTokenValid || !isSessionValid) {
             //filterChain.doFilter(request, response);
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;

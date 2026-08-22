@@ -11,4 +11,6 @@ public interface IAuthService {
     UserTokenDto login(String email, String password);
 
     boolean validateToken(String token);
+
+    void logout(String authHeader);
 }
