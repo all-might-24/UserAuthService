@@ -68,7 +68,7 @@ public class AuthService implements IAuthService{
         } else {
             roleToBeSet = optionalRole.get();
         }
-        user.setRoles(List.of(roleToBeSet));
+        user.setRoles(Set.of(roleToBeSet));
 
         return userService.convertToDto(userService.createUser(user));
     }

@@ -8,6 +8,7 @@ import com.ecommerceproject.userauthservice.models.Role;
 import com.ecommerceproject.userauthservice.models.User;
 import com.ecommerceproject.userauthservice.repositories.RoleRepository;
 import com.ecommerceproject.userauthservice.repositories.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -41,30 +42,22 @@ public class UserService implements IUserService{
     }
 
     @Override
+    @Transactional
     public void assignRoles(Long userId, List<String> roleNames) {
 
         Optional<User> optionalUser = findByUserId(userId);
-
         if (optionalUser.isEmpty()) {
             throw new UserDoesNotExistsException("User does not exist");
         }
-
         User user = optionalUser.get();
 
         for (String roleName : roleNames) {
-
-            Optional<Role> optionalRole =
-                    roleRepository.findByRoleTitle(roleName);
-
+            Optional<Role> optionalRole = roleRepository.findByRoleTitle(roleName);
             if (optionalRole.isEmpty()) {
                 throw new RoleDoesNotExistException("Role does not exist");
             }
-
             Role role = optionalRole.get();
-
-            if (!user.getRoles().contains(role)) {
-                user.getRoles().add(role);
-            }
+            user.getRoles().add(role);
         }
 
         userRepository.save(user);

@@ -3,7 +3,6 @@ package com.ecommerceproject.userauthservice.controllers;
 import com.ecommerceproject.userauthservice.dtos.*;
 import com.ecommerceproject.userauthservice.exceptions.UnAuthorizedException;
 import com.ecommerceproject.userauthservice.services.IAuthService;
-import com.ecommerceproject.userauthservice.services.IUserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
