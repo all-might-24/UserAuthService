@@ -6,15 +6,18 @@ import com.ecommerceproject.userauthservice.models.User;
 import com.ecommerceproject.userauthservice.services.IAuthService;
 import com.ecommerceproject.userauthservice.services.IUserService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
+@Validated
 public class AuthController {
 
     private final IAuthService authService;
@@ -95,5 +98,10 @@ public class AuthController {
     @PreAuthorize("hasRole('USER')")
     public String testUser() {
         return "Welcome User";
+    }
+
+    @GetMapping("/test/{id}")
+    public String testValidation(@PathVariable @Positive Long id) {
+        return "Valid ID: " + id;
     }
 }

@@ -2,6 +2,7 @@ package com.ecommerceproject.userauthservice.ControllerAdvice;
 
 import com.ecommerceproject.userauthservice.dtos.ExceptionDto;
 import com.ecommerceproject.userauthservice.exceptions.*;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -71,6 +72,25 @@ public class GlobalExceptionHandler {
                 .getFieldErrors()
                 .stream()
                 .collect(Collectors.toMap(error -> error.getField(), error -> error.getDefaultMessage()));
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        ExceptionDto dto = createExceptionDto(status, "Validation Failed");
+        dto.setErrors(errors);
+        return new ResponseEntity<>(dto, status);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ExceptionDto> handleConstraintViolationException(ConstraintViolationException e) {
+        Map<String, String> errors = e
+                .getConstraintViolations()
+                .stream()
+                .collect(Collectors.toMap(
+                        error -> {
+                            String path = error.getPropertyPath().toString();
+                            return path.substring(path.lastIndexOf('.') + 1);
+                        },
+                        error -> error.getMessage()
+                ));
+
         HttpStatus status = HttpStatus.BAD_REQUEST;
         ExceptionDto dto = createExceptionDto(status, "Validation Failed");
         dto.setErrors(errors);

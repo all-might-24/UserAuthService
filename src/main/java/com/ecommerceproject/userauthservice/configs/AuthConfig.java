@@ -38,6 +38,7 @@ public class AuthConfig {
                                 "/auth/signup",
                                 "/auth/login",
                                 "/auth/validate-token"
+                                //"/auth/test/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
