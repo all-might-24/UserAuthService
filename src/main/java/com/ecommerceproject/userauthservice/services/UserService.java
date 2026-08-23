@@ -1,7 +1,9 @@
 package com.ecommerceproject.userauthservice.services;
 
+import com.ecommerceproject.userauthservice.dtos.UserDto;
 import com.ecommerceproject.userauthservice.exceptions.RoleDoesNotExistException;
 import com.ecommerceproject.userauthservice.exceptions.UserDoesNotExistsException;
+import com.ecommerceproject.userauthservice.mapper.UserMapper;
 import com.ecommerceproject.userauthservice.models.Role;
 import com.ecommerceproject.userauthservice.models.User;
 import com.ecommerceproject.userauthservice.repositories.RoleRepository;
@@ -18,10 +20,14 @@ public class UserService implements IUserService{
 
     private final RoleRepository roleRepository;
 
+    private final UserMapper userMapper;
+
     public UserService(UserRepository userRepository,
-                       RoleRepository roleRepository) {
+                       RoleRepository roleRepository,
+                       UserMapper userMapper) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.userMapper = userMapper;
     }
 
     @Override
@@ -35,29 +41,67 @@ public class UserService implements IUserService{
     }
 
     @Override
-    public void assignRoles(String email, List<Role> roles) {
+    public void assignRoles(Long userId, List<String> roleNames) {
 
-        Optional<User> optionalUser = findByEmail(email);
-        if(optionalUser.isEmpty()) {
+        Optional<User> optionalUser = findByUserId(userId);
+
+        if (optionalUser.isEmpty()) {
             throw new UserDoesNotExistsException("User does not exist");
         }
-        if(roles.isEmpty()) return;
 
         User user = optionalUser.get();
 
-        for(Role irole : roles) {
-            Optional<Role> optionalRole = roleRepository.findByRoleTitle(irole.getRoleTitle());
-            if(optionalRole.isEmpty()) {
+        for (String roleName : roleNames) {
+
+            Optional<Role> optionalRole =
+                    roleRepository.findByRoleTitle(roleName);
+
+            if (optionalRole.isEmpty()) {
                 throw new RoleDoesNotExistException("Role does not exist");
             }
+
             Role role = optionalRole.get();
 
-            if(!user.getRoles().contains(role)) {
+            if (!user.getRoles().contains(role)) {
                 user.getRoles().add(role);
             }
         }
+
         userRepository.save(user);
     }
 
+    @Override
+    public UserDto getUserInfo(Long userId) {
+        Optional<User> optionalUser = findByUserId(userId);
+        if(optionalUser.isEmpty()) {
+            throw new UserDoesNotExistsException("User does not exist");
+        }
+        User user = optionalUser.get();
+        return convertToDto(user);
+    }
+
+    @Override
+    public List<String> getMyProfileRoles(Long userId) {
+        Optional<User> optionalUser = findByUserId(userId);
+        if(optionalUser.isEmpty()) {
+            throw new UserDoesNotExistsException("User does not exist");
+        }
+
+        return optionalUser.get()
+                .getRoles()
+                .stream()
+                .map(Role::getRoleTitle)
+                .toList();
+    }
+
+    @Override
+    public UserDto convertToDto(User user) {
+        return userMapper.toDto(user);
+    }
+
+    @Override
+    public Optional<User> findByUserId(Long userId) {
+        return userRepository.findById(userId);
+    }
 
 }

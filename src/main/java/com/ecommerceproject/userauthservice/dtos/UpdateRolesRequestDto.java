@@ -1,5 +1,6 @@
 package com.ecommerceproject.userauthservice.dtos;
 
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -7,11 +8,8 @@ import java.util.List;
 
 @Getter
 @Setter
-public class UserDto {
+public class UpdateRolesRequestDto {
 
-    private Long id;
-    private String username;
-    private String email;
-    private List<String> roles;
-
+    @NotEmpty
+    private List<String> roleNames;
 }

@@ -1,6 +1,6 @@
 package com.ecommerceproject.userauthservice.services;
 
-import com.ecommerceproject.userauthservice.models.Role;
+import com.ecommerceproject.userauthservice.dtos.UserDto;
 import com.ecommerceproject.userauthservice.models.User;
 
 import java.util.List;
@@ -12,5 +12,15 @@ public interface IUserService {
 
     User createUser(User user);
 
-    void assignRoles(String email, List<Role> roles);
+    void assignRoles(Long userId, List<String> roleNames);
+
+//    UserDto getMyProfile(Long userId);
+
+    UserDto convertToDto(User user);
+
+    List<String> getMyProfileRoles(Long userId);
+
+    Optional<User> findByUserId(Long userId);
+
+    UserDto getUserInfo(Long userId);
 }

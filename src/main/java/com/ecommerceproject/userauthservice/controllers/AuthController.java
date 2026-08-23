@@ -2,16 +2,12 @@ package com.ecommerceproject.userauthservice.controllers;
 
 import com.ecommerceproject.userauthservice.dtos.*;
 import com.ecommerceproject.userauthservice.exceptions.UnAuthorizedException;
-import com.ecommerceproject.userauthservice.models.User;
 import com.ecommerceproject.userauthservice.services.IAuthService;
 import com.ecommerceproject.userauthservice.services.IUserService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Positive;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,15 +18,8 @@ public class AuthController {
 
     private final IAuthService authService;
 
-    private final IUserService userService;
-
-//    public AuthController(IAuthService authService) {
-//        this.authService = authService;
-//    }
-
-    public AuthController(IAuthService authService, IUserService userService) {
+    public AuthController(IAuthService authService) {
         this.authService = authService;
-        this.userService = userService;
     }
 
 
@@ -40,12 +29,15 @@ public class AuthController {
                 signUpRequestDto.getEmail(),
                 signUpRequestDto.getPassword());
 
-        return new ResponseEntity<>(user, HttpStatus.CREATED);
+        //return new ResponseEntity<>(user, HttpStatus.CREATED);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(user);
 
     }
 
     @PostMapping("/login")
-    public ResponseEntity<UserDto> login(@RequestBody LoginRequestDto loginRequestDto) {
+    public ResponseEntity<UserDto> login(@Valid @RequestBody LoginRequestDto loginRequestDto) {
 
         UserTokenDto userTokenDto = authService.login(loginRequestDto.getEmail(), loginRequestDto.getPassword());
 
@@ -67,26 +59,13 @@ public class AuthController {
         }
     }
 
-    @GetMapping("/test-auth")
-    public String testAuthentication(Authentication authentication) {
-        if (authentication == null) {
-            return "Not authenticated";
-        }
-        return "Authenticated user: " + authentication.getPrincipal() +
-                ", Authorities: " + authentication.getAuthorities();
-    }
-
     @PostMapping("/logout")
-    public String logout(@RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<Void> logout(@RequestHeader("Authorization") String authHeader) {
         authService.logout(authHeader);
-        return "Logout success";
+        return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/assign-roles")
-    @PreAuthorize("hasRole('ADMIN')")
-    public void assignRolesToUser(@RequestBody AssignRolesRequestDto assignRolesRequestDto) {
-        userService.assignRoles(assignRolesRequestDto.getUser().getEmail(), assignRolesRequestDto.getRoles());
-    }
+    /* --------------------------------------------------------------------------------------
 
     @GetMapping("/admin-test")
     @PreAuthorize("hasRole('ADMIN')")
@@ -104,4 +83,15 @@ public class AuthController {
     public String testValidation(@PathVariable @Positive Long id) {
         return "Valid ID: " + id;
     }
+    @GetMapping("/test-auth")
+    public String testAuthentication(Authentication authentication) {
+        if (authentication == null) {
+            return "Not authenticated";
+        }
+        return "Authenticated user: " + authentication.getPrincipal() +
+                ", Authorities: " + authentication.getAuthorities();
+    }
+
+
+     */
 }

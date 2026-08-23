@@ -3,7 +3,6 @@ package com.ecommerceproject.userauthservice.services;
 import com.ecommerceproject.userauthservice.dtos.UserDto;
 import com.ecommerceproject.userauthservice.dtos.UserTokenDto;
 import com.ecommerceproject.userauthservice.exceptions.*;
-import com.ecommerceproject.userauthservice.mapper.UserMapper;
 import com.ecommerceproject.userauthservice.models.Role;
 import com.ecommerceproject.userauthservice.models.Session;
 import com.ecommerceproject.userauthservice.models.User;
@@ -26,22 +25,18 @@ public class AuthService implements IAuthService{
 
     private final IUserService userService;
 
-    private final UserMapper userMapper;
-
 
 
     public AuthService(RoleRepository roleRepository,
                        ISessionService sessionService,
                        BCryptPasswordEncoder encoder,
                        ITokenService jwtService,
-                       IUserService userService,
-                       UserMapper userMapper) {
+                       IUserService userService) {
         this.roleRepository = roleRepository;
         this.sessionService = sessionService;
         this.encoder = encoder;
         this.jwtService = jwtService;
         this.userService = userService;
-        this.userMapper = userMapper;
     }
 
 
@@ -75,7 +70,7 @@ public class AuthService implements IAuthService{
         }
         user.setRoles(List.of(roleToBeSet));
 
-        return userMapper.toDto(userService.createUser(user));
+        return userService.convertToDto(userService.createUser(user));
     }
 
     @Override
@@ -94,7 +89,7 @@ public class AuthService implements IAuthService{
             long currentTimeInMills = System.currentTimeMillis();
 
             payload.put("iat", currentTimeInMills);
-            payload.put("exp", currentTimeInMills+100000);
+            payload.put("exp", currentTimeInMills+10000000);
             payload.put("iss", "Issuer");
             payload.put("userId", user.getId());
 
@@ -110,7 +105,7 @@ public class AuthService implements IAuthService{
 
             sessionService.saveSession(session);
 
-            return new UserTokenDto(userMapper.toDto(user), token);
+            return new UserTokenDto(userService.convertToDto(user), token);
         } else {
             throw new InvalidCredentialsException("Invalid Credentials");
         }
