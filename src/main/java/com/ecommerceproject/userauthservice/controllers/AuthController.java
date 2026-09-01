@@ -6,6 +6,7 @@ import com.ecommerceproject.userauthservice.services.IAuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -40,8 +41,16 @@ public class AuthController {
 
         UserTokenDto userTokenDto = authService.login(loginRequestDto.getEmail(), loginRequestDto.getPassword());
 
+        ResponseCookie cookie = ResponseCookie
+                        .from("token", userTokenDto.getToken())
+                        .httpOnly(true)
+                        .secure(false)
+                        .path("/")
+                        .sameSite("Lax")
+                        .build();
+
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.SET_COOKIE, userTokenDto.getToken());
+        headers.add(HttpHeaders.SET_COOKIE, cookie.toString());
 
         return ResponseEntity
                 .ok()

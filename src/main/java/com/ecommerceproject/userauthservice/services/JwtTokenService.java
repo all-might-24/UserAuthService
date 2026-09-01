@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -23,9 +22,6 @@ public class JwtTokenService implements ITokenService {
     @Override
     public String generateToken(Map<String, Object> payload) {
 
-//       MacAlgorithm macAlgorithm = Jwts.SIG.HS256;
-//       SecretKey secretKey = macAlgorithm.key().build();
-
         return Jwts.builder().claims(payload).signWith(secretKey).compact();
 
     }
@@ -33,10 +29,8 @@ public class JwtTokenService implements ITokenService {
     @Override
     public boolean validateToken(String token) {
         try {
-            Long expiry = parseToken(token).get("exp", Long.class);
-
-            return expiry != null && expiry > System.currentTimeMillis();
-
+            parseToken(token);
+            return true;
         } catch (Exception e) {
             return false;
         }

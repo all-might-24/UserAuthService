@@ -86,10 +86,10 @@ public class AuthService implements IAuthService{
         if(encoder.matches(password, user.getPassword())) { // matches(rawPassword, EncodedPassword)
 
             Map<String, Object> payload = new HashMap<>();
-            long currentTimeInMills = System.currentTimeMillis();
+            long currentTimeInSeconds = System.currentTimeMillis()/1000;
 
-            payload.put("iat", currentTimeInMills);
-            payload.put("exp", currentTimeInMills+10000000);
+            payload.put("iat", currentTimeInSeconds);
+            payload.put("exp", currentTimeInSeconds+10000);
             payload.put("iss", "Issuer");
             payload.put("userId", user.getId());
 

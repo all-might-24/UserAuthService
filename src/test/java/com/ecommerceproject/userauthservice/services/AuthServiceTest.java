@@ -6,19 +6,19 @@ import com.ecommerceproject.userauthservice.exceptions.EmailAlreadyExistsExcepti
 import com.ecommerceproject.userauthservice.exceptions.InvalidCredentialsException;
 import com.ecommerceproject.userauthservice.exceptions.UserDoesNotExistsException;
 import com.ecommerceproject.userauthservice.models.Role;
+import com.ecommerceproject.userauthservice.models.Session;
 import com.ecommerceproject.userauthservice.models.User;
 import com.ecommerceproject.userauthservice.models.enums.State;
 import com.ecommerceproject.userauthservice.repositories.RoleRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -259,4 +259,213 @@ class AuthServiceTest {
         verify(roleRepository).save(any(Role.class));
         verify(userService).createUser(any(User.class));
     }
+
+    @Test
+    void login_shouldCreateActiveSession_whenCredentialsAreValid() {
+
+        String email = "test@example.com";
+        String password = "password";
+        String encodedPassword = "encodedPassword";
+        String token = "jwt-token";
+
+        Role role = new Role();
+        role.setRoleTitle("USER");
+
+        User user = new User();
+        user.setId(1L);
+        user.setEmail(email);
+        user.setPassword(encodedPassword);
+        user.setRoles(Set.of(role));
+
+        UserDto userDto = new UserDto();
+        userDto.setId(1L);
+        userDto.setEmail(email);
+
+        when(userService.findByEmail(email))
+                .thenReturn(Optional.of(user));
+
+        when(encoder.matches(password, encodedPassword))
+                .thenReturn(true);
+
+        when(jwtService.generateToken(anyMap()))
+                .thenReturn(token);
+
+        when(userService.convertToDto(user))
+                .thenReturn(userDto);
+
+        authService.login(email, password);
+
+        ArgumentCaptor<Session> sessionCaptor =
+                ArgumentCaptor.forClass(Session.class);
+
+        verify(sessionService)
+                .saveSession(sessionCaptor.capture());
+
+        Session savedSession =
+                sessionCaptor.getValue();
+
+        assertEquals(user, savedSession.getUser());
+        assertEquals(token, savedSession.getToken());
+        assertEquals(State.ACTIVE, savedSession.getState());
+    }
+
+    @Test
+    void login_shouldGenerateTokenWithCorrectClaims() {
+
+        String email = "test@example.com";
+        String password = "password";
+
+        Role userRole = new Role();
+        userRole.setRoleTitle("USER");
+
+        Role adminRole = new Role();
+        adminRole.setRoleTitle("ADMIN");
+
+        User user = new User();
+        user.setId(10L);
+        user.setEmail(email);
+        user.setPassword("encodedPassword");
+        user.setRoles(Set.of(userRole, adminRole));
+
+        UserDto userDto = new UserDto();
+        userDto.setId(10L);
+
+        when(userService.findByEmail(email))
+                .thenReturn(Optional.of(user));
+
+        when(encoder.matches(
+                password,
+                "encodedPassword"
+        )).thenReturn(true);
+
+        when(jwtService.generateToken(anyMap()))
+                .thenReturn("jwt-token");
+
+        when(userService.convertToDto(user))
+                .thenReturn(userDto);
+
+        authService.login(email, password);
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Map<String, Object>> payloadCaptor =
+                ArgumentCaptor.forClass(Map.class);
+
+        verify(jwtService)
+                .generateToken(payloadCaptor.capture());
+
+        Map<String, Object> payload =
+                payloadCaptor.getValue();
+
+        assertEquals(10L, payload.get("userId"));
+        assertEquals("Issuer", payload.get("iss"));
+
+        assertNotNull(payload.get("iat"));
+        assertNotNull(payload.get("exp"));
+
+        @SuppressWarnings("unchecked")
+        List<String> roles =
+                (List<String>) payload.get("scope");
+
+        assertEquals(2, roles.size());
+        assertTrue(roles.contains("USER"));
+        assertTrue(roles.contains("ADMIN"));
+
+        long issuedAt =
+                ((Number) payload.get("iat")).longValue();
+
+        long expiration =
+                ((Number) payload.get("exp")).longValue();
+
+        assertEquals(
+                10000L,
+                expiration - issuedAt
+        );
+    }
+    @Test
+    void validateToken_shouldReturnFalse_whenSessionDoesNotExist() {
+
+        String token = "jwt-token";
+
+        when(sessionService.findByToken(token))
+                .thenReturn(Optional.empty());
+
+        boolean result =
+                authService.validateToken(token);
+
+        assertFalse(result);
+
+        verify(jwtService, never())
+                .validateToken(anyString());
+
+        verify(sessionService, never())
+                .saveSession(any(Session.class));
+    }
+    @Test
+    void validateToken_shouldReturnTrue_whenSessionExistsAndTokenIsValid() {
+
+        String token = "jwt-token";
+
+        Session session = new Session();
+        session.setToken(token);
+        session.setState(State.ACTIVE);
+
+        when(sessionService.findByToken(token))
+                .thenReturn(Optional.of(session));
+
+        when(jwtService.validateToken(token))
+                .thenReturn(true);
+
+        boolean result =
+                authService.validateToken(token);
+
+        assertTrue(result);
+
+        verify(jwtService)
+                .validateToken(token);
+
+        verify(sessionService, never())
+                .saveSession(any(Session.class));
+    }
+
+    @Test
+    void validateToken_shouldReturnFalseAndInvalidateSession_whenTokenIsInvalid() {
+
+        String token = "expired-jwt-token";
+
+        Session session = new Session();
+        session.setToken(token);
+        session.setState(State.ACTIVE);
+
+        when(sessionService.findByToken(token))
+                .thenReturn(Optional.of(session));
+
+        when(jwtService.validateToken(token))
+                .thenReturn(false);
+
+        boolean result =
+                authService.validateToken(token);
+
+        assertFalse(result);
+        assertEquals(
+                State.INACTIVE,
+                session.getState()
+        );
+
+        verify(sessionService)
+                .saveSession(session);
+    }
+
+    @Test
+    void logout_shouldDelegateToSessionService() {
+
+        String authHeader =
+                "Bearer jwt-token";
+
+        authService.logout(authHeader);
+
+        verify(sessionService)
+                .logout(authHeader);
+    }
+
+
 }

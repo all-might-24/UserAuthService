@@ -71,11 +71,18 @@ public class GlobalExceptionHandler {
                 .getBindingResult()
                 .getFieldErrors()
                 .stream()
-                .collect(Collectors.toMap(error -> error.getField(), error -> error.getDefaultMessage()));
+                .collect(Collectors.toMap(
+                        error -> error.getField(),
+                        error -> error.getDefaultMessage(),
+                        (firstMessage, secondMessage) -> firstMessage
+                ));
+
         HttpStatus status = HttpStatus.BAD_REQUEST;
         ExceptionDto dto = createExceptionDto(status, "Validation Failed");
         dto.setErrors(errors);
-        return new ResponseEntity<>(dto, status);
+        return ResponseEntity
+                .status(status)
+                .body(dto);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -96,6 +103,15 @@ public class GlobalExceptionHandler {
         dto.setErrors(errors);
         return new ResponseEntity<>(dto, status);
     }
+
+//    @ExceptionHandler(Exception.class)
+//    public ResponseEntity<ExceptionDto> handleUnexpectedException(Exception e) {
+//        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+//        ExceptionDto dto = createExceptionDto(status, "Unexpected error has occurred");
+//        return ResponseEntity
+//                .status(status)
+//                .body(dto);
+//    }
 
     private ExceptionDto createExceptionDto(HttpStatus status, String message) {
         ExceptionDto dto = new ExceptionDto();
